@@ -1,0 +1,61 @@
+#+TITLE: A minimal GNU Emacs environment for Python Development
+#+AUTHOR: Christopher M. Fuhrman
+#+EMAIL: cfuhrman@pobox.com
+#+OPTIONS: email:t
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \pagestyle{fancyplain}
+#+LATEX_HEADER: \usepackage{bookmark}
+#+LATEX_HEADER: \hypersetup{urlcolor=blue}
+#+LATEX_HEADER: \hypersetup{colorlinks,urlcolor=blue}
+#+LATEX_HEADER: \fancyhead[RE,LO]{\leftmark}
+#+LATEX_HEADER: \fancyhead[LE,RO]{\thepage}
+
+#+LATEX: \thispagestyle{empty}
+
+* Overview
+
+  The following is intended to be a working GNU Emacs environment specifically
+  tailored for python development.  The following elements of an Emacs
+  environment will be configured:
+
+   * Package manager configuration
+   * Appearance using [[https://github.com/doomemacs/themes][Doom Themes]] and [[https://github.com/seagle0128/doom-modeline][Doom Modeline]], giving Emacs a modern look
+   * A completion and narrowing framework utilizing [[https://emacs-helm.github.io/helm/][Helm]]
+   * [[https://magit.vc/][Magit]], a Git porcelain inside Emacs
+   * Auto-completion using Helm, [[https://github.com/joaotavora/yasnippet][YASnippet]] and [[https://company-mode.github.io/][Company]] mode
+   * Project navigation using [[https://projectile.mx/][Projectile]] and [[https://github.com/Alexander-Miller/treemacs][treemacs]]
+   * Code navigation, refactoring via [[https://emacs-lsp.github.io/lsp-mode/][LSP]] mode, specifically using the Microsoft
+     VS Code Language server for Python
+
+* Requirements
+
+   * GNU Emacs version 27.1 or greater recommended
+
+* Installation
+
+  #+begin_src sh
+    # Clone repository into ~/.emacs.d
+    cd $HOME
+    git clone git@github.com:cfuhrman/emacs-for-python ./.emacs.d
+  #+end_src
+
+  Emacs itself can be installed via your operating systems package manager
+  (=apt=, =zypper=, =dnf=, =homebrew=).  For Ubuntu systems, I install Emacs via
+  snap.
+
+  When Emacs is started, the built-in package manager will automatically set up
+  and install the appropriate packages for your Emacs development environment.
+
+* Other projects
+
+  This Emacs configuration is meant to be relatively simple.  For a more mature
+  configuration, feel free to check out the following:
+
+   * [[https://www.spacemacs.org/][Spacemacs]]
+   * [[https://github.com/doomemacs/doomemacs][Doom Emacs]]
+   * Public version of my own [[https://github.com/cfuhrman/shellpak/tree/master/emacs.d][Emacs configuration]]
+
+* Resources
+
+   * The [[https://www.emacswiki.org/][Emacs Wiki]]
+   * [[https://systemcrafters.net/emacs-from-scratch/][Emacs from scratch]] by System Crafters

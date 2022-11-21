@@ -1,0 +1,628 @@
+#+TITLE: Emacs Configuration File
+#+AUTHOR: Christopher M. Fuhrman
+#+EMAIL: cfuhrman@pobox.com
+#+OPTIONS: email:t
+#+LATEX_HEADER: \usepackage{fancyhdr}
+#+LATEX_HEADER: \pagestyle{fancyplain}
+#+LATEX_HEADER: \usepackage{bookmark}
+#+LATEX_HEADER: \hypersetup{urlcolor=blue}
+#+LATEX_HEADER: \hypersetup{colorlinks,urlcolor=blue}
+#+LATEX_HEADER: \fancyhead[RE,LO]{\leftmark}
+#+LATEX_HEADER: \fancyhead[LE,RO]{\thepage}
+
+#+LATEX: \thispagestyle{empty}
+* General Setup
+
+  Let Emacs load faster by tweaking garbage collection settings.  Here, we are
+  reducing the number of times we must garbage collect by increasing
+  =gc-cons-threshold=  from the default of 800k.
+
+  #+begin_src emacs-lisp
+    (setq gc-cons-threshold (* 500 1000 1000))
+  #+end_src
+
+  Now, we need to configure package settings so we can automatically download
+  packages when we start up.
+
+  #+begin_src emacs-lisp
+    (require 'package)
+
+    (setq package-archives
+	  '(("melpa" . "https://melpa.org/packages/")
+	    ("gnu"   . "http://elpa.gnu.org/packages/")))
+
+    (setq package-check-signature nil)
+
+    (package-initialize)
+    (unless package-archive-contents
+      (package-refresh-contents))
+
+    (unless (package-installed-p 'use-package)
+      (package-install 'use-package))
+
+    (require 'use-package)
+  #+end_src
+
+* Appearance
+
+  Make Emacs look more modern by utilizing Doom Modeline and Doom themes.
+
+** Doom Modeline
+
+   The default modeline looks extremely outdated.  So, use doom-modeline to give
+   us a more modern look.
+
+   #+begin_src emacs-lisp
+     (use-package doom-modeline
+       :ensure t
+
+       :hook (after-init . doom-modeline-mode)
+       )
+   #+end_src
+
+   The nice thing about doom-modeline is that it integrates well with Doom
+   themes.
+
+** Doom Themes
+
+   The doom-themes package installs additional color themes on top of the
+   existing themes that come with emacs.  To change theme via Helm, execute =M-x
+   helm-themes=.  This configuration binds =helm-themes= to =C-c t=.  By
+   default, this stanza enables the doom material theme.
+
+  #+begin_src emacs-lisp
+    (use-package doom-themes
+      :ensure t
+
+      :config
+      (load-theme 'doom-material t)
+      )
+  #+end_src
+
+* Behavior
+
+  Here, we adjust Emacs default behavior by installing some programs to make it
+  easier to navigate around in and perform basic functions such as command
+  execution and file selection.
+
+** cmf/choose-line-number-mode-hook
+
+   GNU Emacs prior to version 26.1 included a mode called =linum-mode= for
+   displaying line numbers on the left-hand-side when editing particular types
+   of files, such as python files.  As of Emacs 26.1, a new mode,
+   =display-line-numbers-mode=, was added providing a much better experience.
+   Here, I've a custom function for choosing which line number mode to use based
+   GNU Emacs version.
+
+   #+begin_src emacs-lisp
+     (defun cmf/choose-line-number-mode-hook ()
+       "Determine line number mode to use based on Emacs version."
+       (if (version< emacs-version "26.1")
+	   (linum-mode t)
+	 (display-line-numbers-mode t))
+       )
+   #+end_src
+
+   For an example of how to get a specific mode to use this hook, see [[*YAML][YAML]]
+   section below.
+
+** Helm, a completion and narrowing framework
+
+   Install [[https://emacs-helm.github.io/helm/][Helm]], a completion and narrowing framework.  This is used for
+   narrowing down a selection, such as opening a file, searching in a file for
+   an item and executing a specific command.
+
+   #+begin_src emacs-lisp
+     (use-package helm
+       :ensure t
+
+       :bind(
+	     ("M-x"	. helm-M-x)
+	     ("C-x C-f"	. helm-find-files)
+	     ("M-i"     . helm-imenu)
+	     )
+
+       :config
+       (helm-autoresize-mode)
+       (helm-mode 1)
+       )
+
+     ;; Installs the helm theme package for theme selection
+     (use-package helm-themes
+       :ensure t
+
+       :bind ("C-c t"  . helm-themes)
+       )
+   #+end_src
+
+*** Alternatives to Helm
+
+     * [[https://github.com/minad/consult][Consult]]
+     * [[https://www.masteringemacs.org/article/introduction-to-ido-mode][Counsel/Ivy/Swiper]]
+     * [[https://www.masteringemacs.org/article/introduction-to-ido-mode][IDO]] (Emacs built-in)
+
+** Company-mode, a modular completion framework
+
+   [[http://company-mode.github.io/][Company-mode]] provides a drop-down system for completions based on a list.
+   Key bindings, as configured below, are as follows:
+
+    * =C-n= :: next entry
+    * =C-p= :: previous entry
+    * =TAB= :: complete selection
+
+   #+begin_src emacs-lisp
+     (use-package company
+      :ensure t
+
+      :bind (:map company-active-map
+		  ("C-n" . company-select-next)
+		  ("C-p" . company-select-previous)
+		  ("TAB" . company-complete-selection)
+		  )
+
+      :hook (emacs-lisp-mode .
+			     (lambda ()
+			       (add-to-list 'company-backends 'company-capf)))
+
+      :custom
+      (company-tooltip-align-annotations t)
+      (company-tooltip-minimum-width 27)
+      (company-idle-delay 0.3)
+      (company-tooltip-limit 10)
+      (company-minimum-prefix-length 3)
+      (company-tooltip-flip-when-above t)
+
+      :init
+      (global-company-mode)
+      )
+   #+end_src
+
+** Which-key mode, for showing all those confusing key bindings
+
+   [[https://github.com/justbur/emacs-which-key][=which-key=]] provids a minor mode for displaying the key bindings following
+   your currently entered incomplete command (a prefix) in a popup.  This
+   configuration sets the idle delay to 1 second.
+
+   #+begin_src emacs-lisp
+     (use-package which-key
+       :ensure t
+       :diminish which-key-mode
+
+       :init
+       (which-key-mode)
+
+       :custom
+       (which-key-idle-delay 1)
+       )
+   #+end_src
+
+* Project Management
+
+  Utilize projectile for project navigation.  This configuration is set up to
+  look for projects in the following folders:
+
+   * =~/dev=
+   * =~/Projects=
+
+  Feel free to customize per taste
+
+  #+begin_src emacs-lisp
+    (use-package projectile
+      :ensure t
+      :diminish projectile-mode
+
+      :bind-keymap
+      ("C-c p" . projectile-command-map)
+
+      :custom
+      (projectile-completion-system 'helm)
+      (projectile-enable-caching t)
+      (projectile-indexing-method 'alien)
+
+      :init
+      ;; Integrate helm with projectile
+      (use-package helm-projectile
+	:ensure t
+
+	:config
+	(helm-projectile-on)
+	)
+
+      (setq projectile-switch-project-action #'projectile-dired)
+
+      :config
+      (dolist (devpath '("~/dev"
+			 "~/Projects"
+			 ))
+	(if (file-directory-p devpath)
+	    (add-to-list 'projectile-project-search-path devpath))
+	)
+      )
+  #+end_src
+
+* Programming
+
+  Here, we add a number of packages to help with the programming experience.
+  This configuration uses the built-in python mode.
+
+** Customize prog-mode
+
+   This customization enables a number of minor modes to make
+   programming-specific buffers much easier to work with.
+
+   #+begin_src emacs-lisp
+     (add-hook 'prog-mode-hook 'cmf/choose-line-number-mode-hook)
+     (add-hook 'prog-mode-hook
+	       (lambda ()
+		 (auto-fill-mode t)
+		 (eldoc-mode t)
+		 (electric-pair-mode t)
+		 (indent-tabs-mode -1)
+		 (subword-mode t)
+		 (setq fill-column 120)))
+     (add-hook 'emacs-lisp-mode-hook
+	       (lambda ()
+		 (setq fill-column 70)))
+   #+end_src
+
+** Diff-hl
+
+   [[https://github.com/dgutov/diff-hl][=diff-hl-mode=]] highlights uncommitted changes on the side of the window
+   (using the fringe, by default).  This makes use of the built-in Emacs VC
+   functionality.
+
+   #+begin_src emacs-lisp
+     (use-package diff-hl
+       :ensure t
+
+       :config
+       (global-diff-hl-mode)
+       )
+   #+end_src
+
+   Be aware that this mode does not display changed lines in the fringe when
+   running under CLI/Terminal mode.
+
+** Flycheck, a syntax checker for Emacs
+
+   [[http://www.flycheck.org][Flycheck]] is a modern on-the-fly syntax checking extension for GNU Emacs.
+   This configuration utilizes the following extra packages:
+
+    * [[https://github.com/yasuyk/helm-flycheck][=helm-flycheck=]] :: Integrates flycheck into helm
+
+   #+begin_src emacs-lisp
+     (use-package flycheck
+       :ensure t
+       :defer t
+
+       :custom
+       (flycheck-check-syntax-automatically (quote (idle-change)))
+       (flycheck-highlighting-mode 'lines)
+       (flycheck-idle-change-delay 3)
+
+       :init
+       (global-flycheck-mode)
+
+       :config
+       (use-package helm-flycheck
+	 :ensure t
+
+	 :bind (:map flycheck-mode-mapc("C-c ! h" . helm-flycheck))
+	 )
+       )
+   #+end_src
+
+** LSP Mode
+
+   Emacs client/library for the Language Server Protocol.  [[https://github.com/emacs-lsp/lsp-mode][LSP mode]] provides
+   the following functionality, dependent on the LSP client used:
+
+    * Code navigation
+    * Function header auto-generation
+    * Dependency management, such as inserting libraries
+    * Code refactoring
+    * Function usage
+
+   ... and much more!
+
+   Here, we make use of the following additional functionality:
+
+    * [[https://github.com/yyoncho/helm-lsp][=helm-lsp=]] :: Integrates LSP with Helm
+    * [[https://github.com/emacs-lsp/lsp-ui][=lsp-ui=]] :: Contains a series of useful UI integrations for lsp-mode
+
+   All LSP commands are prefixed to =C-c l=.
+
+   #+begin_src emacs-lisp
+     (use-package lsp-mode
+       :ensure t
+       :commands (lsp lsp-deferred)
+
+       :custom
+       (lsp-prefer-flymake nil)
+       (lsp-file-watch-threshold 40000)
+       (lsp-response-timeout 30)
+
+       :init
+       (setq read-process-output-max (* 1024 1024)) ;; 1mb
+
+       :config
+       (use-package helm-lsp
+	 :ensure t
+	 :after helm
+
+	 :config
+	 (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+	 )
+       (use-package lsp-ui
+	:ensure t
+
+	:hook (lsp-mode . lsp-ui-mode)
+
+	:config
+	(if (eq window-system nil)
+	    (setq lsp-ui-doc-show-with-cursor t)
+	  (setq lsp-ui-doc-show-with-mouse t)
+	  )
+
+	:custom
+	(lsp-ui-doc-alignment 'window)
+	(lsp-ui-doc-position 'top)
+	)
+
+       (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)
+       (lsp-enable-which-key-integration t)
+       (if (window-system)
+	   (setq lsp-headerline-breadcrumb-icons-enable t)
+	 (setq lsp-headerline-breadcrumb-icons-enable nil)
+	 )
+       )
+   #+end_src
+
+** Treemacs
+
+   [[https://github.com/Alexander-Miller/treemacs][Treemacs]] is a tree-style file explorer for Emacs.  This specific
+   configuration includes MAGIT integration.
+
+   #+begin_src emacs-lisp
+     (use-package treemacs
+       :ensure t
+       :defer t
+
+       :bind
+       (:map global-map
+	     ("M-0"       . treemacs-select-window)
+	     ("C-x t 1"   . treemacs-delete-other-windows)
+	     ("C-x t t"   . treemacs)
+	     ("C-x t B"   . treemacs-bookmark)
+	     ("C-x t C-t" . treemacs-find-file)
+	     ("C-x t M-t" . treemacs-find-tag))
+
+       :init
+       ;; HACK: Added here so that treemacs won't complain about
+       ;;       hl-line-mode's background color for icons under terminal
+       ;;       mode
+       (defvar treemacs-no-load-time-warnings t)
+
+       :custom
+       (treemacs-follow-mode t)
+       (treemacs-filewatch-mode t)
+
+       :config
+       (use-package treemacs-magit
+	 :ensure t
+	 :after magit)
+       )
+   #+end_src
+** Programming with Python
+
+   This configuration uses python mode, which is included in Emacs.  In
+   addition, this provides support for the following:
+
+    - [[https://github.com/emacs-lsp/lsp-python-ms][=lsp-python-ms=]] :: MS VSCODE Python Language server
+    - [[https://github.com/glyph/python-docstring-mode][=python-docstring-mode=]] :: provides syntax highlighting for python doc strings
+    - [[https://github.com/naiquevin/sphinx-doc.el][=sphinx-doc=]] :: Which provides the insertion of a skeleton doc section for
+      methods and functions
+    - [[http://github.com/jorgenschaefer/pyvenv][=pyvenv=]] :: Replicates virtualenv inside Emacs.
+
+
+    #+begin_src emacs-lisp
+      (use-package python
+	;; This is a built-in mode
+
+	:config
+	(use-package lsp-python-ms
+	  :ensure t
+	  :defer t
+
+	  :hook (python-mode .
+			     (lambda ()
+			       (require 'lsp-python-ms)
+			       (lsp-deferred)))
+
+	  :init
+	  (setq lsp-python-ms-auto-install-server t)
+	  (dolist (pypath '("/usr/bin/python3"
+			    "/usr/local/bin/python3"
+			    "/usr/pkg/bin/python3"
+			    "/opt/homebrew/bin/python3"
+			    ))
+	    (if (file-regular-p pypath)
+		(setq lsp-python-ms-python-executable pypath)
+	      ))
+	  )
+
+	(use-package python-docstring
+	  :ensure t
+
+	  :hook (python-mode . python-docstring-mode)
+	  )
+
+	(use-package sphinx-doc
+	  :ensure t
+
+	  :bind ("C-x p" . sphinx-doc)
+
+	  :hook (python-mode .
+			     (lambda ()
+			       (require 'sphinx-doc)
+			       (sphinx-doc-mode t)))
+	  )
+
+	:custom
+	(python-shell-interpreter "python3")
+	)
+
+      (use-package pyvenv
+	:ensure t
+	:defer t
+	:after python
+
+	:config
+	(pyvenv-mode 1)
+	)
+    #+end_src
+** YAML
+
+   [[https://github.com/yoshiki/yaml-mode][=yaml-mode=]] is a simple Emacs mode for editing YAML files.  Note this
+   configuration will enable LSP for any YAML buffers.
+
+   #+begin_src emacs-lisp
+     (use-package yaml-mode
+       :ensure t
+       :no-require t
+
+       :mode (("\\.sls\\'" . yaml-mode)
+	      ("\\.yml\\'" . yaml-mode))
+
+       :hook ((yaml-mode . cmf/choose-line-number-mode-hook)
+	      (yaml-mode . lsp-deferred)
+	      (yaml-mode . hl-todo-mode)
+	      (yaml-mode .
+			 (lambda ()
+			   (subword-mode t)
+			   (auto-fill-mode -1)))
+	      )
+       )
+   #+end_src
+
+** YaSnippet
+
+   YASnippet, which stands for *Y*et *A*nother *S*nippet mode, provides built in
+   snippets for completing commonly used statements such as =if()=, =foreach=,
+   etc.,
+
+   #+begin_src emacs-lisp
+     (use-package yasnippet
+       :ensure t
+
+       :init
+       (yas-global-mode t)
+
+       :config
+       (use-package yasnippet-snippets
+	 :ensure t
+	 )
+
+       :custom
+       (yas-wrap-around-region t)
+       )
+   #+end_src
+
+* Additional functionality
+
+** Flyspell
+
+   [[https://www.emacswiki.org/emacs/FlySpell][=flyspell-mode=]] provides on-the-fly spell checking.  Note this specific
+   configuration requires the `aspell` program installed via your operating
+   systems package manager.  Flyspell candidates are displayed via [[https://github.com/d12frosted/flyspell-correct][Helm]].
+
+   #+begin_src emacs-lisp
+     (use-package flyspell
+     :ensure t
+
+     :bind (:map flyspell-mode-map
+		 ("C-c ;" . flyspell-correct-wrapper))
+
+     ;; Hook flyspell into prog-mode and text-mode
+     :hook ((prog-mode . flyspell-prog-mode)
+	    (text-mode . flyspell-mode))
+
+     :config
+     (setq-default ispell-program-name "aspell")
+     (use-package flyspell-correct-helm
+       :ensure t
+       :pin melpa
+       )
+
+     :custom
+     (ispell-extra-args (quote ("--run-together")))
+     )
+   #+end_src
+** Helpful
+
+   [[https://github.com/Wilfred/helpful][=helpful=]] is a replacement for *help* buffers that provides more contextual
+   information.
+
+   #+begin_src emacs-lisp
+     (use-package helpful
+       :ensure t
+       :commands (helpful-callable helpful helpful-command helpful-key)
+
+       :bind
+       ([remap describe-function]    . helpful-function)
+       ([remap describe-symbol]      . helpful-symbol)
+       ([remap describe-variable]    . helpful-variable)
+       ([remap describe-command]     . helpful-command)
+       ([remap describe-key]         . helpful-key)
+       )
+   #+end_src
+** Magit
+
+   [[https://magit.vc/][Magit]] (sounds like "Magic"), provides a nice text-based user interface to the
+   popular git content management tool.  Note this mode plays well with the
+   built-in vc mode for git.  To execute magit in a directory, simply do =C-x
+   g=.
+
+   #+begin_src emacs-lisp
+     (unless (eq (executable-find "git") nil)
+       (use-package magit
+	 :ensure t
+	 :commands magit-status
+
+	 :bind ("C-x g" . magit-status)
+	 )
+       )
+   #+end_src
+** Log Edit Customization
+
+   All this stanza does is to apply =log-edit-mode= to various buffers used by
+   source code management tools.
+
+   #+begin_src emacs-lisp
+     (use-package log-edit
+       ;; This is a built-in mode
+       :mode (
+	      ("COMMIT.*"   . log-edit-mode)
+	      ("ci-comment" . log-edit-mode)
+	      ("bzr_log\\." . log-edit-mode)
+	      ("cvs*"       . log-edit-mode)
+	      ("pico\\."    . log-edit-mode)
+	      )
+       )
+   #+end_src
+
+* Other packages to consider
+
+   - [[https://github.com/abo-abo/ace-window][=ace-window=]] :: Provides navigation between various windows open in your
+     Emacs session.
+   - [[https://github.com/emacs-evil/evil][=evil=]] mode :: Vi keybindings in Emacs!  Blasphemy!
+   - [[https://www.dr-qubit.org/undo-tree.html][=undo-tree=]] :: Provides a tree-based method of performing undo & redos.
+
+* Clean up
+
+  Here, we make sure that pauses are faster by decreasing =gc-cons-threshold=.
+
+  #+begin_src emacs-lisp
+    ;; Make gc pauses faster by decreasing the threshold.
+    (setq gc-cons-threshold (* 200 1000 1000))
+  #+end_src
