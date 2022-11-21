@@ -418,7 +418,7 @@
    This configuration uses python mode, which is included in Emacs.  In
    addition, this provides support for the following:
 
-    - [[https://github.com/emacs-lsp/lsp-python-ms][=lsp-python-ms=]] :: MS VSCODE Python Language server
+    - [[https://github.com/emacs-lsp/lsp-pyright][=lsp-pyright=]] :: PyRight Python Language server
     - [[https://github.com/glyph/python-docstring-mode][=python-docstring-mode=]] :: provides syntax highlighting for python doc strings
     - [[https://github.com/naiquevin/sphinx-doc.el][=sphinx-doc=]] :: Which provides the insertion of a skeleton doc section for
       methods and functions
@@ -430,25 +430,15 @@
 	;; This is a built-in mode
 
 	:config
-	(use-package lsp-python-ms
+	(use-package lsp-pyright
 	  :ensure t
 	  :defer t
 
 	  :hook (python-mode .
 			     (lambda ()
-			       (require 'lsp-python-ms)
+			       (require 'lsp-pyright)
 			       (lsp-deferred)))
 
-	  :init
-	  (setq lsp-python-ms-auto-install-server t)
-	  (dolist (pypath '("/usr/bin/python3"
-			    "/usr/local/bin/python3"
-			    "/usr/pkg/bin/python3"
-			    "/opt/homebrew/bin/python3"
-			    ))
-	    (if (file-regular-p pypath)
-		(setq lsp-python-ms-python-executable pypath)
-	      ))
 	  )
 
 	(use-package python-docstring

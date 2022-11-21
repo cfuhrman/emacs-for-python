@@ -24,8 +24,8 @@
    * [[https://magit.vc/][Magit]], a Git porcelain inside Emacs
    * Auto-completion using Helm, [[https://github.com/joaotavora/yasnippet][YASnippet]] and [[https://company-mode.github.io/][Company]] mode
    * Project navigation using [[https://projectile.mx/][Projectile]] and [[https://github.com/Alexander-Miller/treemacs][treemacs]]
-   * Code navigation, refactoring via [[https://emacs-lsp.github.io/lsp-mode/][LSP]] mode, specifically using the Microsoft
-     VS Code Language server for Python
+   * Code navigation, refactoring via [[https://emacs-lsp.github.io/lsp-mode/][LSP]] mode, specifically using the PyRight
+     Language Server
 
 * Requirements
 
