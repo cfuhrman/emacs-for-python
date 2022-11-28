@@ -26,6 +26,7 @@
    * Project navigation using [[https://projectile.mx/][Projectile]] and [[https://github.com/Alexander-Miller/treemacs][treemacs]]
    * Code navigation, refactoring via [[https://emacs-lsp.github.io/lsp-mode/][LSP]] mode, specifically using the PyRight
      Language Server
+   * All relevant configuration contained in documented [[file:Emacs.org][Emacs.org]]
 
 * Requirements
 
